@@ -89,16 +89,32 @@ function startLocatorMode() {
     const css = getCssSelector(el);
     if (css) {
       const list = [...document.querySelectorAll(css)];
+
       if (list.length === 1) {
-        candidates.push({ code: `page.locator("${css}")`, matches: 1, score: 70 });
-      } else if (list.length > 1) {
         candidates.push({
-          code: `page.locator("${css}").nth(${list.indexOf(el)})`,
+          code: `page.locator("${css}")`,
           matches: 1,
-          score: 60
+          score: 70
         });
+
+      } else if (list.length > 1) {
+        const scoped = getScopedCssSelector(el, css);
+        if (scoped && document.querySelectorAll(scoped).length === 1) {
+          candidates.push({
+            code: `page.locator("${scoped}")`,
+            matches: 1,
+            score: 68
+          });
+        } else {
+          candidates.push({
+            code: `page.locator("${css}").nth(${list.indexOf(el)})`,
+            matches: 1,
+            score: 60
+          });
+        }
       }
     }
+
 
     const href = el.getAttribute("href");
     if (href) {
@@ -138,13 +154,27 @@ function startLocatorMode() {
     }
 
     const css = getCssSelector(el);
-    if (css && document.querySelectorAll(css).length === 1) {
-      candidates.push({
-        code: `driver.findElement(By.cssSelector("${css}"));`,
-        matches: 1,
-        score: 70
-      });
+    if (css) {
+      const list = document.querySelectorAll(css);
+
+      if (list.length === 1) {
+        candidates.push({
+          code: `driver.findElement(By.cssSelector("${css}"));`,
+          matches: 1,
+          score: 70
+        });
+      } else if (list.length > 1) {
+        const scoped = getScopedCssSelector(el, css);
+        if (scoped && document.querySelectorAll(scoped).length === 1) {
+          candidates.push({
+            code: `driver.findElement(By.cssSelector("${scoped}"));`,
+            matches: 1,
+            score: 68
+          });
+        }
+      }
     }
+
 
     candidates.push({
       code: `driver.findElement(By.xpath("${buildIndexedXPath(el)}"));`,
@@ -204,6 +234,29 @@ function startLocatorMode() {
     }
     return path;
   }
+
+  // ================= PARENT SCOPED CSS =================
+  function getScopedCssSelector(el, baseCss) {
+    let parent = el.parentElement;
+
+    while (parent && parent !== document.body) {
+      if (parent.id) {
+        return `#${parent.id} ${baseCss}`;
+      }
+
+      if (parent.className && parent.className.trim()) {
+        const cls = parent.className.trim().split(/\s+/)[0];
+        return `.${cls} ${baseCss}`;
+      }
+
+      parent = parent.parentElement;
+    }
+
+    return null;
+  }
+
+
+
 
   // ================= CLIPBOARD SAFE COPY =================
   function copyToClipboard(text) {
