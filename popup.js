@@ -322,8 +322,28 @@ function showCopyModal(playwright, selenium) {
   `;
 
   modal.innerHTML = `
-    <h3 style="margin:0 0 10px;font-size:16px">Copy Locator</h3>
+<div style="
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  ">
+    <h3 style="margin:0;font-size:16px">Copy Locator</h3>
 
+    <button id="closeBtn" title="Close" style="
+      background: rgba(255,255,255,0.06);
+      border: none;
+      color: #e5e7eb;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 28px;
+      text-align: center;
+    ">X</button>
+  </div>
     <label style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
       <input type="checkbox" id="pw" checked />
       <strong>Playwright</strong>
@@ -367,8 +387,19 @@ function showCopyModal(playwright, selenium) {
 
   modal.addEventListener("click", e => e.stopPropagation());
   overlay.addEventListener("click", closeAll);
+  modal.querySelector("#closeBtn").onclick = closeAll;
+  function onEsc(e) {
+  if (e.key === "Escape") {
+    closeAll();
+  }
+}
+
+document.addEventListener("keydown", onEsc);
+
+
 
   function closeAll() {
+    document.removeEventListener("keydown", onEsc);
     overlay.remove();
     modal.remove();
     cleanup();
